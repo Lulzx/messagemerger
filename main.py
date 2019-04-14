@@ -4,6 +4,7 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 import os
+import time
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,11 +28,31 @@ def forward(bot, update, chat_data):
 def done(bot, update, chat_data):
     user_id = update.message.from_user.id
     try:
-        messages = chat_data[user_id]
-        update.message.reply_text(messages)
-
+        text = str(chat_data[user_id])
+        if len(text) <= 4096:
+            update.message.reply_text(text)
+        else:
+            parts = []
+            while len(text) > 0:
+                if len(text) > 4096:
+                    part = text[:4096]
+                    first_lnbr = part.rfind("\n")
+                    if first_lnbr != -1:
+                        parts.append(part[:first_lnbr])
+                        text = text[(first_lnbr + 1) :]
+                    else:
+                        parts.append(part)
+                        text = text[4096:]
+                else:
+                    parts.append(text)
+                    break
+            msg = None
+            for part in parts:
+                msg = update.message.reply_text(part)
+                time.sleep(1)
+            parts = []
     except KeyError:
-        update.message.reply_text('Forward some messages.')
+        update.message.reply_text("Forward some messages.")
     chat_data.clear()
 
 
