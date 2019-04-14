@@ -40,14 +40,19 @@ def error(bot, update, error):
 
 
 def main():
-    updater = Updater(os.environ.get('TOKEN'))
+    TOKEN = os.environ.get('TOKEN')
+    updater = Updater(TOKEN)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
     dp.add_handler(MessageHandler(Filters.forwarded, forward, pass_chat_data=True))
     dp.add_error_handler(error)
-    updater.start_polling()
+    PORT = int(os.environ.get('PORT', '8443'))
+    updater.start_webhook(listen="0.0.0.0",
+                      port=PORT,
+                      url_path=TOKEN)
+    updater.bot.set_webhook("https://lulzx.herokuapp.com/" + TOKEN)
     logger.info("Ready to rock..!")
     updater.idle()
 
