@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters)
 import logging
 import os
 import time
@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def start(bot, update):
-    update.message.reply_text("""I am a bot to help you merge messages.""")
-    update.message.reply_text("""Forward a bunch of messages and send /done command when you're done, I will send you an always-at-the-bottom message with all contents concatenated!""")
+    update.message.reply_text("I am a bot to help you merge messages. ")
+    update.message.reply_text("Forward a bunch of messages and send /done command when you're done.")
 
 
 def forward(bot, update, chat_data):
@@ -46,18 +46,16 @@ def done(bot, update, chat_data):
                 else:
                     parts.append(text)
                     break
-            msg = None
             for part in parts:
-                msg = update.message.reply_text(part)
+                update.message.reply_text(part)
                 time.sleep(1)
-            parts = []
     except KeyError:
         update.message.reply_text("Forward some messages.")
     chat_data.clear()
 
 
 def error(bot, update, error):
-    logger.warn('Update "%s" caused error "%s"' % (update, error))
+    logger.warning('Update "%s" caused error "%s"' % (update, error))
 
 
 def main():
