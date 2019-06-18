@@ -8,14 +8,13 @@ import time
 import json
 from uuid import uuid4
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, ParseMode, \
-    InputTextMessageContent
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import (Updater, CommandHandler, InlineQueryHandler, MessageHandler, Filters)
 from tinydb import TinyDB, Query
 
 try:
     db = TinyDB('db.json')
-except:
+except PermissionError:
     db = TinyDB('C:/Users/Lulzx/My Documents/msg/db.json')
 user = Query()
 
@@ -87,7 +86,7 @@ def error(bot, update, error):
 def main():
     try:
         token = sys.argv[1]
-    except:
+    except IndexError:
         token = os.environ.get("TOKEN")
     updater = Updater(token)
     dp = updater.dispatcher
