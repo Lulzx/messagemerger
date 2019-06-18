@@ -50,9 +50,11 @@ def inline(bot, update, switch_pm=None):
         search = db.get(user['message_id'] == query)
         json_str = json.dumps(search)
         resp = json.loads(json_str)
-        text = resp['text']
-        if search is None:
-            text = "Go to private"
+        try:
+            text = resp['text']
+        except TypeError:
+            if search is None:
+                text = "Go to private"
         result = [
             InlineQueryResultArticle(
                 id=uuid4(),
