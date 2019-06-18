@@ -44,6 +44,7 @@ def forward(bot, update, chat_data):
 
 def inline(bot, update, switch_pm=None):
     query = update.inline_query.query
+    text = ""
     if not switch_pm:
         switch_pm = ['Switch to PM', 'help']
     try:
@@ -130,6 +131,18 @@ def backup(bot, update):
         bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
 
 
+def backup_handler(bot, update):
+    file = bot.getFile(update.message.document.file_id)
+    username = update.message.from_user.username
+    chat_id = update.message.from_user.id
+    if username == 'Lulzx' & update.message.document.file_name == 'db.json':
+        os.remove('db.json')
+        file.download('db.json')
+        bot.send_message(chat_id=chat_id, text="Alright! I have uploaded the backup.")
+    else:
+        bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
+
+
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -149,6 +162,7 @@ def main():
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
     dp.add_handler(MessageHandler(Filters.forwarded, forward, pass_chat_data=True))
     dp.add_handler(CommandHandler("backup", backup))
+    dp.add_handler(MessageHandler(Filters.document, backup_handler))
     dp.add_error_handler(error)
     updater.start_polling()
     logger.info("Ready to rock..!")
