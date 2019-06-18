@@ -161,7 +161,7 @@ def main():
     dp.add_handler(CommandHandler("add", add, pass_args=True))
     dp.add_handler((CallbackQueryHandler(post)))
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
-    dp.add_handler(MessageHandler(Filters.forwarded, forward, pass_chat_data=True))
+    dp.add_handler(MessageHandler(Filters.forwarded & Filters.text, forward, pass_chat_data=True))
     dp.add_handler(CommandHandler("backup", backup))
     dp.add_handler(MessageHandler(Filters.document, backup_handler))
     dp.add_error_handler(error)
