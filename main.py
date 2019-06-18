@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 import sys
 import time
-import json
 from uuid import uuid4
 
+import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import (Updater, CommandHandler, InlineQueryHandler, MessageHandler, Filters)
+from telegram.ext import (Updater, CommandHandler, InlineQueryHandler, MessageHandler, Filters, CallbackQueryHandler)
 from tinydb import TinyDB, Query
 
 try:
@@ -27,6 +28,10 @@ def start(bot, update):
                               "Forward a bunch of messages and send /done command when you're done.")
 
 
+def get_admin_ids(bot, chat_id):
+    return [admin.user.id for admin in bot.get_chat_administrators(chat_id)]
+
+
 def forward(bot, update, chat_data):
     user_id = update.message.from_user.id
     try:
@@ -42,7 +47,7 @@ def inline(bot, update, switch_pm=None):
     if not switch_pm:
         switch_pm = ['Switch to PM', 'help']
     try:
-        search = db.get(user['message_id'] == f'{query}')
+        search = db.get(user['message_id'] == query)
         json_str = json.dumps(search)
         resp = json.loads(json_str)
         text = resp['text']
@@ -66,7 +71,8 @@ def done(bot, update, chat_data):
         text = str(chat_data[user_id])
         message_id = uuid4()
         db.insert({'message_id': f'{message_id}', 'text': f'{text}'})
-        markup = InlineKeyboardMarkup([[InlineKeyboardButton("share", switch_inline_query=f'{message_id}')]])
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", switch_inline_query=f'{message_id}')], [
+            InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id))]])
         if len(text) <= 4096:
             update.message.reply_text(text, reply_markup=markup)
         else:
@@ -77,6 +83,49 @@ def done(bot, update, chat_data):
     except KeyError:
         update.message.reply_text("Forward some messages.")
     chat_data.clear()
+
+
+def post(bot, update):
+    user_id = update.effective_user.id
+    bot.send_chat_action(chat_id=user_id, action=telegram.ChatAction.TYPING)
+    query = update.callback_query
+    search = db.get(user['message_id'] == query.data)
+    json_str = json.dumps(search)
+    resp = json.loads(json_str)
+    text = resp['text']
+    search = db.search(user['user_id'] == f'{user_id}')
+    json_str = json.dumps(search[0])
+    resp = json.loads(json_str)
+    channel_id = resp['channel_id']
+    if channel_id:
+        bot.send_message(chat_id=channel_id, text=text)
+        bot.answer_callback_query(query.id, text="The message has been posted on your channel.", show_alert=False)
+    else:
+        bot.send_message(chat_id=user_id, text="You haven't added any channel yet, send /add followed by your "
+                                               "channel's id.")
+
+
+def add(bot, update, args):
+    user_id = update.message.from_user.id
+    channel_id = ' '.join(args)
+    if bot.id in get_admin_ids(bot, channel_id):
+        db.upsert({'user_id': f'{user_id}', 'channel_id': f'{channel_id}'}, user.user_id == user_id)
+        bot.send_message(chat_id=channel_id, text="Your channel has been successfully added!")
+        bot.send_message(chat_id=user_id, text="Your channel has been successfully added!")
+    else:
+        bot.send_message(chat_id=user_id, text="Please double-check if the bot is an administrator in your channel.")
+
+
+def backup(bot, update):
+    username = update.message.from_user.username
+    chat_id = update.message.from_user.id
+    if username == 'Lulzx':
+        try:
+            bot.send_document(chat_id=chat_id, document=open('db.json', 'rb'))
+        except FileNotFoundError:
+            bot.send_document(chat_id=chat_id, document=open('C:/Users/Lulzx/My Documents/msg/db.json', 'rb'))
+    else:
+        bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
 
 
 def error(bot, update, error):
@@ -93,8 +142,11 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(InlineQueryHandler(inline))
+    dp.add_handler(CommandHandler("add", add, pass_args=True))
+    dp.add_handler((CallbackQueryHandler(post)))
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
     dp.add_handler(MessageHandler(Filters.forwarded, forward, pass_chat_data=True))
+    dp.add_handler(CommandHandler("backup", backup))
     dp.add_error_handler(error)
     updater.start_polling()
     logger.info("Ready to rock..!")
