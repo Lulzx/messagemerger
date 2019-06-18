@@ -133,11 +133,12 @@ def backup(bot, update):
 
 def backup_handler(bot, update):
     file = bot.getFile(update.message.document.file_id)
+    file_name = update.message.document.file_name
     username = update.message.from_user.username
     chat_id = update.message.from_user.id
-    if username == 'Lulzx' & update.message.document.file_name == 'db.json':
-        os.remove('db.json')
-        file.download('db.json')
+    if username == 'Lulzx':
+        os.remove(file_name)
+        file.download(file_name)
         bot.send_message(chat_id=chat_id, text="Alright! I have uploaded the backup.")
     else:
         bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
