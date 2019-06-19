@@ -95,7 +95,11 @@ def post(bot, update):
     search = db.get(user['message_id'] == query.data)
     json_str = json.dumps(search)
     resp = json.loads(json_str)
-    text = resp['text']
+    try:
+        text = resp['text']
+    except TypeError:
+        bot.send_message(chat_id=user_id, text="I am unable to retrieve and process this message, please forward this "
+                                               "again.")
     search = db.search(user['user_id'] == f'{user_id}')
     try:
         json_str = json.dumps(search[0])
