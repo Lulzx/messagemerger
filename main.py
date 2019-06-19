@@ -9,14 +9,15 @@ import time
 from uuid import uuid4
 
 import telegram
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent, \
+    TelegramError
 from telegram.ext import (Updater, CommandHandler, InlineQueryHandler, MessageHandler, Filters, CallbackQueryHandler)
 from tinydb import TinyDB, Query
 
 try:
     db = TinyDB('db.json')
 except PermissionError:
-    db = TinyDB('C:/Users/Lulzx/My Documents/msg/db.json')
+    db = TinyDB('C:/Users/Lulzx/My Documents/messagemerger/db.json')
 user = Query()
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
@@ -33,7 +34,7 @@ def get_admin_ids(bot, chat_id):
 
 
 def forward(bot, update, chat_data):
-    user_id = update.message.from_user.id
+    user_id = update.message.chat_id
     try:
         messages = str(chat_data[user_id])
 
@@ -43,15 +44,24 @@ def forward(bot, update, chat_data):
 
 
 def split(bot, update, chat_data):
-    user_id = update.message.from_user.id
+    user_id = update.message.chat_id
     try:
         text = str(chat_data[user_id])
+        text = text.replace('\n\n', '\n').replace('\n\n', '\n').replace(u"\u2800", '')
         messages = text.split("\n")
+        filtered_chars = ['$', '&', '+', ',', ':', ';', '=', '?', '@', '#', '|', '<', '>', '.', '^', '*', '(', ')', '%',
+                          '!', '-', '_']
         for part in messages:
-            update.message.reply_text(part)
+            if part in filtered_chars:
+                continue
+            else:
+                update.message.reply_text(part)
+    except IndexError:
+        pass
     except KeyError:
-        update.message.reply_text("Forward some messages.")
-    chat_data.clear()
+        update.message.reply_text("Forward a merged message.")
+    except TelegramError:
+        chat_data.clear()
 
 
 def inline(bot, update, switch_pm=None):
@@ -81,7 +91,7 @@ def inline(bot, update, switch_pm=None):
 
 
 def done(bot, update, chat_data):
-    user_id = update.message.from_user.id
+    user_id = update.message.chat_id
     try:
         text = str(chat_data[user_id])
         message_id = uuid4()
@@ -124,7 +134,7 @@ def post(bot, update):
 
 
 def add(bot, update, args):
-    user_id = update.message.from_user.id
+    user_id = update.message.chat_id
     channel_id = ' '.join(args)
     if bot.id in get_admin_ids(bot, channel_id):
         db.upsert({'user_id': f'{user_id}', 'channel_id': f'{channel_id}'}, user.user_id == user_id)
@@ -136,12 +146,12 @@ def add(bot, update, args):
 
 def backup(bot, update):
     username = update.message.from_user.username
-    chat_id = update.message.from_user.id
+    chat_id = update.message.chat_id
     if username == 'Lulzx':
         try:
             bot.send_document(chat_id=chat_id, document=open('db.json', 'rb'))
         except FileNotFoundError:
-            bot.send_document(chat_id=chat_id, document=open('C:/Users/Lulzx/My Documents/msg/db.json', 'rb'))
+            bot.send_document(chat_id=chat_id, document=open('C:/Users/Lulzx/My Documents/messagemerger/db.json', 'rb'))
     else:
         bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
 
@@ -150,7 +160,7 @@ def backup_handler(bot, update):
     file = bot.getFile(update.message.document.file_id)
     file_name = update.message.document.file_name
     username = update.message.from_user.username
-    chat_id = update.message.from_user.id
+    chat_id = update.message.chat_id
     if username == 'Lulzx':
         os.remove(file_name)
         file.download(file_name)
@@ -176,7 +186,7 @@ def main():
     dp.add_handler(CommandHandler("add", add, pass_args=True))
     dp.add_handler((CallbackQueryHandler(post)))
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
-    dp.add_handler(CommandHandler("split", split, pass_chat_data=True))    
+    dp.add_handler(CommandHandler("split", split, pass_chat_data=True))
     dp.add_handler(MessageHandler(Filters.forwarded & Filters.text, forward, pass_chat_data=True))
     dp.add_handler(CommandHandler("backup", backup))
     dp.add_handler(MessageHandler(Filters.document, backup_handler))
