@@ -42,6 +42,18 @@ def forward(bot, update, chat_data):
     chat_data[user_id] = "{}\n".format(messages + update.message.text)
 
 
+def split(bot, update, chat_data):
+    user_id = update.message.from_user.id
+    try:
+        text = str(chat_data[user_id])
+        messages = text.split("\n")
+        for part in messages:
+            update.message.reply_text(part)
+    except KeyError:
+        update.message.reply_text("Forward some messages.")
+    chat_data.clear()
+
+
 def inline(bot, update, switch_pm=None):
     query = update.inline_query.query
     text = ""
@@ -164,6 +176,7 @@ def main():
     dp.add_handler(CommandHandler("add", add, pass_args=True))
     dp.add_handler((CallbackQueryHandler(post)))
     dp.add_handler(CommandHandler("done", done, pass_chat_data=True))
+    dp.add_handler(CommandHandler("split", split, pass_chat_data=True))    
     dp.add_handler(MessageHandler(Filters.forwarded & Filters.text, forward, pass_chat_data=True))
     dp.add_handler(CommandHandler("backup", backup))
     dp.add_handler(MessageHandler(Filters.document, backup_handler))
