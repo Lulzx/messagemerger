@@ -97,16 +97,15 @@ def post(bot, update):
     resp = json.loads(json_str)
     try:
         text = resp['text']
-    except TypeError:
-        bot.send_message(chat_id=user_id, text="I am unable to retrieve and process this message, please forward this "
-                                               "again.")
-    search = db.search(user['user_id'] == f'{user_id}')
-    try:
+        search = db.search(user['user_id'] == f'{user_id}')
         json_str = json.dumps(search[0])
         resp = json.loads(json_str)
         channel_id = resp['channel_id']
         bot.send_message(chat_id=channel_id, text=text)
         bot.answer_callback_query(query.id, text="The message has been posted on your channel.", show_alert=False)
+    except TypeError:
+        bot.send_message(chat_id=user_id, text="I am unable to retrieve and process this message, please forward this "
+                                               "again.")
     except IndexError:
         bot.send_message(chat_id=user_id, text="You haven't added any channel yet, send /add followed by your "
                                                "channel's id.")
