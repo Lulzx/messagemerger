@@ -165,8 +165,6 @@ def backup_handler(bot, update):
         os.remove(file_name)
         file.download(file_name)
         bot.send_message(chat_id=chat_id, text="Alright! I have uploaded the backup.")
-    else:
-        bot.send_message(chat_id=chat_id, text="Only for admins for maintenance purpose.")
 
 
 def error(bot, update, error):
