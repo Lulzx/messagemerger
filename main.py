@@ -106,8 +106,6 @@ def done(bot, update, chat_data):
         if len(text) <= 4096:
             text = text.splitlines()
             text = [i.split(': ')[1:] for i in text]
-            # username = text.split(': ')[0]
-            # text = text.replace('{}: '.format(username), '')
             msg = ''
             for i in text:
                 msg += i[0] + '\n'
@@ -132,15 +130,28 @@ def post(bot, update):
     bot.send_chat_action(chat_id=user_id, action=telegram.ChatAction.TYPING)
     query = update.callback_query
     query_data = query.data.split(';')
-    search = db.get(user['message_id'] == query_data[0])
+    message_id = query_data[0]
+    search = db.get(user['message_id'] == message_id)
     json_str = json.dumps(search)
     resp = json.loads(json_str)
     try:
         text = resp['text']
+        share_url = 'tg://msg_url?url=' + urllib.parse.quote(text)
         if query_data[1] == "show_dialogs":
-            share_url = 'tg://msg_url?url=' + urllib.parse.quote(text)
-            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)]])
+            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
+                InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
+                InlineKeyboardButton("🙈 Hide names", callback_data='{};hide_dialogs'.format(message_id))]])
             query.edit_message_text(text=text, reply_markup=markup)
+        elif query_data[1] == "hide_dialogs":
+            text = text.splitlines()
+            text = [i.split(': ')[1:] for i in text]
+            msg = ''
+            for i in text:
+                msg += i[0] + '\n'
+            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
+                InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
+                InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
+            query.edit_message_text(text=msg, reply_markup=markup)
         else:
             search = db.search(user['user_id'] == f'{user_id}')
             json_str = json.dumps(search[0])
