@@ -164,7 +164,7 @@ def post(bot, update):
                                                "again.")
     except IndexError:
         bot.send_message(chat_id=user_id, text="You haven't added any channel yet, send /add followed by your "
-                                               "channel's id.")
+                                               "channel's id which can be found using @ChannelIdBot.")
 
 
 def add(bot, update, args):
