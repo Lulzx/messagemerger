@@ -104,19 +104,19 @@ def done(bot, update, chat_data):
         message_id = uuid4()
         db.insert({'message_id': f'{message_id}', 'text': f'{text}'})
         if len(text) <= 4096:
-            # text = text.splitlines()
-            # text = [i.split(': ')[1:] for i in text]
-            username = text.split(': ')[0]
-            text = text.replace('{}: '.format(username), '')
-            # msg = ''
-            # for i in text:
-            #   msg += i[0] + '\n'
-            query = urllib.parse.quote(text)
+            text = text.splitlines()
+            text = [i.split(': ')[1:] for i in text]
+            # username = text.split(': ')[0]
+            # text = text.replace('{}: '.format(username), '')
+            msg = ''
+            for i in text:
+                msg += i[0] + '\n'
+            query = urllib.parse.quote(msg)
             share_url = 'tg://msg_url?url=' + query
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            update.message.reply_text(text, reply_markup=markup)
+            update.message.reply_text(msg, reply_markup=markup)
         else:
             messages = [text[i: i + 4096] for i in range(0, len(text), 4096)]
             for part in messages:
