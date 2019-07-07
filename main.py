@@ -36,9 +36,10 @@ def get_admin_ids(bot, chat_id):
 
 def forward(bot, update, chat_data):
     user_id = update.message.chat_id
-    username = update.message.forward_from.first_name + ': '
-    if update.message.forward_from.is_bot:
-        username = ""
+    try:
+        username = update.message.forward_from.first_name + ': '
+    except AttributeError:
+        username = "HiddenUser: "
     try:
         messages = str(chat_data[user_id])
 
@@ -51,6 +52,8 @@ def split(bot, update, chat_data):
     user_id = update.message.chat_id
     try:
         text = str(chat_data[user_id])
+        username = text.split(': ')[0]
+        text = text.replace('{}: '.format(username), '')
         text = text.replace('\n\n', '\n').replace('\n\n', '\n').replace(u"\u2800", '')
         messages = text.split("\n")
         filtered_chars = ['$', '&', '+', ',', ':', ';', '=', '?', '@', '#', '|', '<', '>', '.', '^', '*', '(', ')', '%',
@@ -101,17 +104,19 @@ def done(bot, update, chat_data):
         message_id = uuid4()
         db.insert({'message_id': f'{message_id}', 'text': f'{text}'})
         if len(text) <= 4096:
-            text = text.splitlines()
-            text = [i.split(': ')[1:] for i in text]
-            msg = ''
-            for i in text:
-                msg += i[0] + '\n'
-            query = urllib.parse.quote(msg)
+            # text = text.splitlines()
+            # text = [i.split(': ')[1:] for i in text]
+            username = text.split(': ')[0]
+            text = text.replace('{}: '.format(username), '')
+            # msg = ''
+            # for i in text:
+            #   msg += i[0] + '\n'
+            query = urllib.parse.quote(text)
             share_url = 'tg://msg_url?url=' + query
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            update.message.reply_text(msg, reply_markup=markup)
+            update.message.reply_text(text, reply_markup=markup)
         else:
             messages = [text[i: i + 4096] for i in range(0, len(text), 4096)]
             for part in messages:
