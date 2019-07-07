@@ -138,8 +138,7 @@ def post(bot, update):
     try:
         text = resp['text']
         if query_data[1] == "show_dialogs":
-            query = urllib.parse.quote(text)
-            share_url = 'tg://msg_url?url=' + query
+            share_url = 'tg://msg_url?url=' + urllib.parse.quote(text)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)]])
             query.edit_message_text(text=text, reply_markup=markup)
         else:
