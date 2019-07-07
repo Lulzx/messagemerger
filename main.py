@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import time
+import urllib.parse
 from uuid import uuid4
 
 import telegram
@@ -35,12 +36,15 @@ def get_admin_ids(bot, chat_id):
 
 def forward(bot, update, chat_data):
     user_id = update.message.chat_id
+    username = update.message.forward_from.first_name + ': '
+    if update.message.forward_from.is_bot:
+        username = ""
     try:
         messages = str(chat_data[user_id])
 
     except KeyError:
         messages = ""
-    chat_data[user_id] = "{}\n".format(messages + update.message.text)
+    chat_data[user_id] = "{}\n".format(messages + username + update.message.text)
 
 
 def split(bot, update, chat_data):
@@ -96,10 +100,18 @@ def done(bot, update, chat_data):
         text = str(chat_data[user_id])
         message_id = uuid4()
         db.insert({'message_id': f'{message_id}', 'text': f'{text}'})
-        markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", switch_inline_query=f'{message_id}')], [
-            InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id))]])
         if len(text) <= 4096:
-            update.message.reply_text(text, reply_markup=markup)
+            text = text.splitlines()
+            text = [i.split(': ')[1:] for i in text]
+            msg = ''
+            for i in text:
+                msg += i[0] + '\n'
+            query = urllib.parse.quote(msg)
+            share_url = 'tg://msg_url?url=' + query
+            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
+                InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
+                InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
+            update.message.reply_text(msg, reply_markup=markup)
         else:
             messages = [text[i: i + 4096] for i in range(0, len(text), 4096)]
             for part in messages:
@@ -114,17 +126,22 @@ def post(bot, update):
     user_id = update.effective_user.id
     bot.send_chat_action(chat_id=user_id, action=telegram.ChatAction.TYPING)
     query = update.callback_query
-    search = db.get(user['message_id'] == query.data)
+    query_data = query.data.split(';')
+    search = db.get(user['message_id'] == query_data[0])
     json_str = json.dumps(search)
     resp = json.loads(json_str)
     try:
         text = resp['text']
-        search = db.search(user['user_id'] == f'{user_id}')
-        json_str = json.dumps(search[0])
-        resp = json.loads(json_str)
-        channel_id = resp['channel_id']
-        bot.send_message(chat_id=channel_id, text=text)
-        bot.answer_callback_query(query.id, text="The message has been posted on your channel.", show_alert=False)
+        if query_data[1] == "show_dialogs":
+            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", switch_inline_query=f'{query_data[0]}')]])
+            query.edit_message_text(text=text, reply_markup=markup)
+        else:
+            search = db.search(user['user_id'] == f'{user_id}')
+            json_str = json.dumps(search[0])
+            resp = json.loads(json_str)
+            channel_id = resp['channel_id']
+            bot.send_message(chat_id=channel_id, text=text)
+            bot.answer_callback_query(query.id, text="The message has been posted on your channel.", show_alert=False)
     except TypeError:
         bot.send_message(chat_id=user_id, text="I am unable to retrieve and process this message, please forward this "
                                                "again.")
