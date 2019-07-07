@@ -171,7 +171,7 @@ def add(bot, update, args):
     user_id = update.message.chat_id
     channel_id = ' '.join(args)
     if bot.id in get_admin_ids(bot, channel_id):
-        db.insert({'user_id': f'{user_id}', 'channel_id': f'{channel_id}'}, user.user_id == user_id)
+        db.insert({'user_id': f'{user_id}', 'channel_id': f'{channel_id}'})
         bot.send_message(chat_id=channel_id, text="Your channel has been successfully added!")
         bot.send_message(chat_id=user_id, text="Your channel has been successfully added!")
     else:
