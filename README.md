@@ -1,2 +1,2 @@
 # Message Merger
-A simple telegram bot to concatenate message contents.
+A simple bot to concatenate and split message content.
