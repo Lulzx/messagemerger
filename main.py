@@ -136,7 +136,8 @@ def post(bot, update):
     resp = json.loads(json_str)
     try:
         text = resp['text']
-        share_url = 'tg://msg_url?url=' + urllib.parse.quote(text)
+        url_msg = text.replace('_', '__').replace('*', '**')
+        share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
         if query_data[1] == "show_dialogs":
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
@@ -148,7 +149,8 @@ def post(bot, update):
             msg = ''
             for i in text:
                 msg += i[0] + '\n'
-            share_url = 'tg://msg_url?url=' + urllib.parse.quote(msg)
+            url_msg = msg.replace('_', '__').replace('*', '**')
+            share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
