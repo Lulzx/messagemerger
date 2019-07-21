@@ -109,7 +109,8 @@ def done(bot, update, chat_data):
             msg = ''
             for i in text:
                 msg += i[0] + '\n'
-            query = urllib.parse.quote(msg)
+            url_msg = msg.replace('_', '__').replace('*', '**')
+            query = urllib.parse.quote(url_msg)
             share_url = 'tg://msg_url?url=' + query
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
