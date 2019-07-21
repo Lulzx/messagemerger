@@ -148,6 +148,7 @@ def post(bot, update):
             msg = ''
             for i in text:
                 msg += i[0] + '\n'
+            share_url = 'tg://msg_url?url=' + urllib.parse.quote(msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
