@@ -45,7 +45,7 @@ def forward(bot, update, chat_data):
 
     except KeyError:
         messages = ""
-    chat_data[user_id] = "{}\n".format(messages + username + update.message.text_html)
+    chat_data[user_id] = "{}\n".format(messages + username + update.message.text_markdown)
 
 
 def split(bot, update, chat_data):
@@ -62,7 +62,7 @@ def split(bot, update, chat_data):
             if part in filtered_chars:
                 continue
             else:
-                update.message.reply_text(part, parse_mode=ParseMode.HTML)
+                update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN)
     except IndexError:
         pass
     except KeyError:
@@ -114,11 +114,11 @@ def done(bot, update, chat_data):
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            update.message.reply_text(msg, reply_markup=markup, parse_mode=ParseMode.HTML)
+            update.message.reply_text(msg, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         else:
             messages = [text[i: i + 4096] for i in range(0, len(text), 4096)]
             for part in messages:
-                update.message.reply_text(part, parse_mode=ParseMode.HTML)
+                update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN)
                 time.sleep(1)
     except KeyError:
         update.message.reply_text("Forward some messages.")
@@ -141,7 +141,7 @@ def post(bot, update):
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🙈 Hide names", callback_data='{};hide_dialogs'.format(message_id))]])
-            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.HTML)
+            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         elif query_data[1] == "hide_dialogs":
             text = text.splitlines()
             text = [i.split(': ')[1:] for i in text]
@@ -151,13 +151,13 @@ def post(bot, update):
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            query.edit_message_text(text=msg, reply_markup=markup, parse_mode=ParseMode.HTML)
+            query.edit_message_text(text=msg, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         else:
             search = db.search(user['user_id'] == f'{user_id}')
             json_str = json.dumps(search[0])
             resp = json.loads(json_str)
             channel_id = resp['channel_id']
-            bot.send_message(chat_id=channel_id, text=text, parse_mode=ParseMode.HTML)
+            bot.send_message(chat_id=channel_id, text=text, parse_mode=ParseMode.MARKDOWN)
             bot.answer_callback_query(query.id, text="The message has been posted on your channel.", show_alert=False)
     except TypeError:
         bot.send_message(chat_id=user_id, text="I am unable to retrieve and process this message, please forward this "
