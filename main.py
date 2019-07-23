@@ -146,10 +146,10 @@ def post(bot, update):
             query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         elif query_data[1] == "hide_dialogs":
             text = text.splitlines()
-            text = [i.split(': ')[1:] for i in text]
+            text[0] = text[0].split(': ', 1)[1]
             msg = ''
             for i in text:
-                msg += i[0] + '\n'
+                msg += i + '\n'
             url_msg = msg.replace('_', '__').replace('*', '**')
             share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
