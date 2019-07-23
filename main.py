@@ -105,7 +105,12 @@ def done(bot, update, chat_data):
         db.insert({'message_id': f'{message_id}', 'text': f'{text}'})
         if len(text) <= 4096:
             text = text.splitlines()
-            text = [i.split(': ')[1:] for i in text]
+            for i in text:
+                try:
+                    text[0] = i.split(': ', 1)[1]
+                    break
+                except IndexError:
+                    pass
             msg = ''
             for i in text:
                 msg += i[0] + '\n'
