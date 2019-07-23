@@ -71,8 +71,7 @@ def split(bot, update, chat_data):
 		pass
 	except KeyError:
 		update.message.reply_text("Forward a merged message.")
-	except TelegramError:
-		chat_data.clear()
+	chat_data.clear()
 
 
 def inline(bot, update, switch_pm=None):
