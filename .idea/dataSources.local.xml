@@ -8,6 +8,7 @@
       <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
       <secret-storage>master_key</secret-storage>
       <auth-required>false</auth-required>
+      <schema-mapping />
     </data-source>
   </component>
 </project>
