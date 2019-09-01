@@ -177,7 +177,7 @@ def backup_handler(update, context):
     file_name = update.message.document.file_name
     os.remove(file_name)
     file.download(file_name)
-    update.message.reply_document(text="Alright! I have uploaded the backup.")
+    update.message.reply_text(text="Alright! I have uploaded the backup.")
 
 
 def error_callback(update, context):
