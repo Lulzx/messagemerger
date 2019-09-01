@@ -168,7 +168,7 @@ def add(update, context):
 
 @restricted
 def backup(update, context):
-    update.message.reply(document=open('db.json', 'rb'))
+    update.message.reply_document(document=open('db.json', 'rb'))
 
 
 @restricted
@@ -177,7 +177,7 @@ def backup_handler(update, context):
     file_name = update.message.document.file_name
     os.remove(file_name)
     file.download(file_name)
-    update.message.reply(text="Alright! I have uploaded the backup.")
+    update.message.reply_document(text="Alright! I have uploaded the backup.")
 
 
 def error_callback(update, context):
