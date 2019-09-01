@@ -87,7 +87,6 @@ def done(update, context):
     user_id = update.message.from_user.id
     try:
         data = context.user_data[user_id]
-        print(str(data))
         message_id = uuid4()
         db.insert({'message_id': str(message_id), 'text': data})
         text = "\n".join([i.split(': ', 1)[1] for i in data])
@@ -138,7 +137,7 @@ def post(update, context):
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
             query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         else:
-            search = db.search(user_db['user_id'] == f'{user_id}')
+            search = db.search(user_db['user_id'] == str(user_id))
             json_str = json.dumps(search[0])
             resp = json.loads(json_str)
             channel_id = resp['channel_id']
@@ -159,7 +158,7 @@ def add(update, context):
     user_id = update.message.from_user.id
     channel_id = ' '.join(context.args)
     if context.bot.id in get_admin_ids(context.bot, channel_id):
-        db.insert({'user_id': f'{user_id}', 'channel_id': f'{channel_id}'})
+        db.insert({'user_id': str(user_id), 'channel_id': str(channel_id)})
         context.bot.send_message(chat_id=channel_id, text="Your channel has been successfully added!")
         context.bot.send_message(chat_id=user_id, text="Your channel has been successfully added!")
     else:
