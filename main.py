@@ -86,14 +86,12 @@ def split_messages(update, context):
 def done(update, context):
     user_id = update.message.from_user.id
     try:
-        text = ""
         data = context.user_data[user_id]
+        print(str(data))
         message_id = uuid4()
         db.insert({'message_id': str(message_id), 'text': data})
-        if len(data) <= 4096:
-            for i in data:
-                i = i.split(': ', 1)[1]
-                text += i + "\n"
+        text = "\n".join([i.split(': ', 1)[1] for i in data])
+        if len(text) <= 4096:
             url_msg = text.replace('_', '__').replace('*', '**')
             query = urllib.parse.quote(url_msg)
             share_url = 'tg://msg_url?url=' + query
@@ -122,10 +120,6 @@ def post(update, context):
     json_str = json.dumps(search)
     resp = json.loads(json_str)
     data = resp.get('text')
-    text = ""
-    for i in data:
-        i = i.split(': ', 1)[1]
-        text += i + "\n"
     try:
         if query_data[1] == "show_dialogs":
             text = "\n".join(data)
@@ -136,6 +130,7 @@ def post(update, context):
                 InlineKeyboardButton("🙈 Hide names", callback_data='{};hide_dialogs'.format(message_id))]])
             query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
         elif query_data[1] == "hide_dialogs":
+            text = "\n".join([i.split(': ', 1)[1] for i in data])
             url_msg = text.replace('_', '__').replace('*', '**')
             share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
@@ -147,6 +142,7 @@ def post(update, context):
             json_str = json.dumps(search[0])
             resp = json.loads(json_str)
             channel_id = resp['channel_id']
+            text = "\n".join([i.split(': ', 1)[1] for i in data])
             context.bot.send_message(chat_id=channel_id, text=text, parse_mode=ParseMode.MARKDOWN)
             context.bot.answer_callback_query(query.id, text="The message has been posted on your channel.",
                                               show_alert=False)
