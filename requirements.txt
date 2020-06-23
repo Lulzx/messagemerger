@@ -1,3 +1,0 @@
-logzero
-python-telegram-bot
-tinydb

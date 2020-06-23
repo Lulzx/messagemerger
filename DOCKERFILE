@@ -1,0 +1,11 @@
+FROM       python:3.8-slim
+RUN        apt-get update && apt-get install -y git
+RUN        pip install poetry
+RUN        mkdir -p run/
+COPY       poetry.lock pyproject.toml /run/
+WORKDIR    /run
+RUN        poetry install --no-dev --no-root
+COPY       . /run/
+ENV        SHELL=/bin/bash
+WORKDIR    /run/
+ENTRYPOINT ["poetry", "run", "python", "main.py"]

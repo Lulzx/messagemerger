@@ -8,6 +8,7 @@ import sys
 import time
 import urllib.parse
 from functools import wraps
+from pathlib import Path
 from uuid import uuid4
 
 import telegram
@@ -15,11 +16,14 @@ from logzero import logger
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler)
 from tinydb import TinyDB, Query
+from decouple import config
 
-db = TinyDB('db.json')
+data_dir = Path('~', 'messagemerger').expanduser()
+data_dir.mkdir(parents=True, exist_ok=True)
+db = TinyDB(data_dir / 'db.json')
 user_db = Query()
 
-LIST_OF_ADMINS = [691609650]
+LIST_OF_ADMINS = [691609650, 62056065]
 
 
 def start(update, context):
@@ -185,11 +189,7 @@ def error_callback(update, context):
 
 
 def main():
-    try:
-        token = sys.argv[1]
-    except IndexError:
-        token = os.environ.get("TOKEN")
-    updater = Updater(token, use_context=True)
+    updater = Updater(config("BOT_TOKEN"), use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", send_help))
