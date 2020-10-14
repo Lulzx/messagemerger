@@ -10,6 +10,7 @@ logzero = "^1.5.0"
 python-telegram-bot = "^12.8"
 tinydb = "^4.1.1"
 python_decouple = "^3.3"
+beautifulsoup4 = "^4.9.3"
 
 [tool.poetry.dev-dependencies]
 
