@@ -4,7 +4,6 @@
 import json
 import os
 import re
-import sys
 import time
 import urllib.parse
 from functools import wraps
@@ -12,11 +11,13 @@ from pathlib import Path
 from uuid import uuid4
 
 import telegram
+from decouple import config
 from logzero import logger
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler)
 from tinydb import TinyDB, Query
-from decouple import config
+
+from markdown_handler import MarkdownConverter
 
 data_dir = Path('~', 'messagemerger').expanduser()
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +59,7 @@ def store_forwarded_message(update, context):
         first_name = update.message.forward_from.first_name + ': '
     except AttributeError:
         first_name = "HiddenUser: "
-    text = first_name + update.message.text_markdown
+    text = first_name + update.message.text_html
     scheme = [text]
     context.user_data.setdefault(user_id, []).extend(scheme)
 
@@ -78,7 +79,7 @@ def split_messages(update, context):
             if part in filtered_chars:
                 continue
             else:
-                update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN)
+                update.message.reply_text(part, parse_mode=ParseMode.HTML)
     except IndexError:
         pass
     except KeyError:
@@ -95,17 +96,17 @@ def done(update, context):
         db.insert({'message_id': str(message_id), 'text': data})
         text = "\n".join([i.split(': ', 1)[1] for i in data])
         if len(text) <= 4096:
-            url_msg = text.replace('_', '__').replace('*', '**')
+            url_msg = MarkdownConverter().convert(text)
             query = urllib.parse.quote(url_msg)
             share_url = 'tg://msg_url?url=' + query
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            update.message.reply_text(text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
+            update.message.reply_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
         else:
             messages = [text[i: i + 4096] for i in range(0, len(text), 4096)]
             for part in messages:
-                update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN)
+                update.message.reply_text(part, parse_mode=ParseMode.HTML)
                 time.sleep(1)
     except KeyError:
         update.message.reply_text("Forward some messages.")
@@ -126,27 +127,28 @@ def post(update, context):
     try:
         if query_data[1] == "show_dialogs":
             text = "\n".join(data)
-            url_msg = text.replace('_', '__').replace('*', '**')
+            url_msg = MarkdownConverter().convert(text)
             share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🙈 Hide names", callback_data='{};hide_dialogs'.format(message_id))]])
-            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
+            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.HTML)
         elif query_data[1] == "hide_dialogs":
             text = "\n".join([i.split(': ', 1)[1] for i in data])
-            url_msg = text.replace('_', '__').replace('*', '**')
+            url_msg = MarkdownConverter().convert(text)
             share_url = 'tg://msg_url?url=' + urllib.parse.quote(url_msg)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📬 Share", url=share_url)], [
                 InlineKeyboardButton("📢 Publish to channel", callback_data='{}'.format(message_id)),
                 InlineKeyboardButton("🗣 Show names", callback_data='{};show_dialogs'.format(message_id))]])
-            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.MARKDOWN)
+            query.edit_message_text(text=text, reply_markup=markup, parse_mode=ParseMode.HTML)
         else:
             search = db.search(user_db['user_id'] == str(user_id))
             json_str = json.dumps(search[0])
             resp = json.loads(json_str)
             channel_id = resp['channel_id']
             text = "\n".join([i.split(': ', 1)[1] for i in data])
-            context.bot.send_message(chat_id=channel_id, text=text, parse_mode=ParseMode.MARKDOWN)
+            text = MarkdownConverter().convert(text)
+            context.bot.send_message(chat_id=channel_id, text=text, parse_mode=ParseMode.HTML)
             context.bot.answer_callback_query(query.id, text="The message has been posted on your channel.",
                                               show_alert=False)
     except TypeError:
